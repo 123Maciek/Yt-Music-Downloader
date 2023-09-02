@@ -37,23 +37,40 @@ async def downloadMp3(url, directory):
     btnAcceptCookies = await page.xpath("//button[contains(., 'Accept all')]")
     if btnAcceptCookies:
         await btnAcceptCookies[0].click()
+    try:
+        is_ad_playing = await page.waitForSelector('.ytp-ad-text', {'timeout': 3000})
+        if is_ad_playing:
+            print("Skipping ad...")
+            ad_duration_element = await page.querySelector('.ytp-time-duration')
+            if ad_duration_element:
+                ad_duration = await page.evaluate('(element) => element.textContent', ad_duration_element)
+                ad_split = ad_duration.split(':')
+                ad_seconds = int(ad_split[1]) + (int(ad_split[0]) * 60)
+                if ad_seconds > 20:
+                    await asyncio.sleep(7)
+                    btnSkipAd = await page.xpath("//button[contains(., 'Skip Ad')]")
+                    if btnSkipAd:
+                        await btnSkipAd[0].click()
+                else:
+                    await asyncio.sleep(ad_seconds)
+    except:
+        print("There is not ad")
     
-
-    ad_button_element = await page.querySelector('.ytp-ad-btn')
-    while ad_button_element:
-        ad_button_element = await page.querySelector('.ytp-ad-btn')
-        await asyncio.sleep(1)
-        print("Skippping ad ...")
+    await asyncio.sleep(0.5)
+    pyautogui.click()
+    await asyncio.sleep(0.5)
+    pyautogui.hotkey('0')
+    await asyncio.sleep(1)
+    pyautogui.click()
 
     print("Starting recording")
     fs = 44100
     input_device = 3
-    recording = sd.rec(int((video_seconds+2) * fs), samplerate=fs, channels=2, device=input_device)
-
+    recording = sd.rec(int(video_seconds * fs), samplerate=fs, channels=2, device=input_device)
     sd.wait()
 
-    samples_to_keep = int(fs * 2)
-    recording = recording[samples_to_keep:]
+    #samples_to_keep = int(fs * 2)
+    #recording = recording[samples_to_keep:]
 
     desired_gain_dB = 10
     desired_gain = 10 ** (desired_gain_dB / 20.0)
