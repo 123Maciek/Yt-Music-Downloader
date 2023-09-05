@@ -46,11 +46,14 @@ async def downloadMp3(url, directory):
                 ad_duration = await page.evaluate('(element) => element.textContent', ad_duration_element)
                 ad_split = ad_duration.split(':')
                 ad_seconds = int(ad_split[1]) + (int(ad_split[0]) * 60)
-                if ad_seconds > 20:
-                    await asyncio.sleep(7)
-                    btnSkipAd = await page.xpath("//button[contains(., 'Skip Ad')]")
-                    if btnSkipAd:
-                        await btnSkipAd[0].click()
+                if ad_seconds > 10:
+                    try:
+                        await asyncio.sleep(7)
+                        btnSkipAd = await page.xpath("//button[contains(., 'Skip Ad')]")
+                        if btnSkipAd:
+                            await btnSkipAd[0].click()
+                    except:
+                        await asyncio.sleep(ad_seconds-7)
                 else:
                     await asyncio.sleep(ad_seconds)
     except:
